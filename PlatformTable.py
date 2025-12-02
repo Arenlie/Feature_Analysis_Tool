@@ -53,7 +53,7 @@ def output_template(parm_data, bearing_data):
         elif point_code[-2:-1] in ['Z']:
             vel_pass_rms, acc_rms, acc_p, vibration_impulse, vel_p = ['v'] * 5
         # 非应力波、N为数字或外部键相、N不为空时，得到倍频特征值
-        if sensor_type != '应力波' and (isinstance(N, float or int) or N == "外部键相") and ismy_null(N):
+        if sensor_type != '应力波' and ismy_null(N) and ismy_null(N):
             RF_1X, RF_2X, RF_3X, RF_4X, RF_5X = ['v'] * 5
             RF_1_2X, RF_1_3X, RF_1_4X, RF_1_5X = ['v'] * 4
         # f0不为空时，得到电机故障特征
