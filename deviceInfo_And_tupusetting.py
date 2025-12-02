@@ -183,7 +183,7 @@ def tupuSetting_V3(file1, file4):
     df1_1 = pd.read_excel(file1, dtype=str, sheet_name="设备档案")
     df1_2 = pd.read_excel(file1, dtype=str, sheet_name="输出模板")
 
-    df_tupu = pd.DataFrame(columns=['区域', '设备名称', '设备编码', '测点（点位）名称', '测点（点位）编码', '测点（通道）类型',
+    df_tupu = pd.DataFrame(columns=['设备区域', '设备名称', '设备编码', '测点（点位）名称', '测点（点位）编码', '测点（通道）类型',
                                     '波形数据名称', '波形数据编码', '波形数据类型', '数据类型', '单位',
                                     '抽样频率（Hz）', '采样时长(s)', '高通滤波（Hz）', '分析截止频率（Hz）',
                                     '采样点数（需求）'])
@@ -204,7 +204,7 @@ def tupuSetting_V3(file1, file4):
                 series['测点（通道）类型'] = "无线传感器"
             number = len(settings_V3[series['测点（通道）类型']][0])
             new_data = pd.DataFrame({
-                '区域': [dict2[equip_cod]] * number,
+                '设备区域': [dict2[equip_cod]] * number,
                 '设备名称': [series['设备名称']] * number,
                 '设备编码': [series['设备编码']] * number,
                 '测点（点位）名称': [series['测点（点位）名称']] * number,
@@ -237,3 +237,4 @@ if __name__ == "__main__":
     device_info(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx",
                 "后台文件/my_def_对应注释.xlsx", "device.xlsx")
     # tupuSetting_V3(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx", "tupusetting.xlsx")
+
