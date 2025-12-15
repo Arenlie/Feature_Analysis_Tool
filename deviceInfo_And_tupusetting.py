@@ -103,8 +103,8 @@ def device_info(file1, file2, file4):
 
         data_type_cod3 = series['数据项编码'][-3:]
         # print("data_type_cod3:", data_type_cod3)
-        if series['测点编号'][-2] in ['Z'] and series['测点类型'] == '加速度':
-            print("series['测点编号'][-2]:", series['测点编号'][-2])
+        if series['测点编号'][-2] in ['Z'] and (series['测点类型'] == '加速度' or series['测点类型'] == '温度'):
+            # print("series['测点编号'][-2]:", series['测点编号'][-2])
             if data_type_cod3 == '001':
                 df_deviceinfo.at[index, '通道值'] = 'integratRMS'
             elif data_type_cod3 == '003':
@@ -128,8 +128,8 @@ def device_info(file1, file2, file4):
                 rows_to_drop.append(index)
             elif data_type_cod3 == '008':
                 df_deviceinfo.at[index, '通道值'] = 'integratPk'
-            elif data_type_cod3 == '000':
-                df_deviceinfo.at[index, '通道值'] = 'TemperatureBot'
+            # elif data_type_cod3 == '000':
+            #         df_deviceinfo.at[index, '通道值'] = 'TemperatureBot'
         else:
             df_deviceinfo.at[index, '通道值'] = dict1.get(data_type_cod3, 'Unknown')  # 使用dict1查找通道值，默认Unknown
     # 删除标记的行
@@ -237,4 +237,3 @@ if __name__ == "__main__":
     device_info(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx",
                 "后台文件/my_def_对应注释.xlsx", "device.xlsx")
     # tupuSetting_V3(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx", "tupusetting.xlsx")
-
