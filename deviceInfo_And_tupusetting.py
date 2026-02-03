@@ -94,7 +94,7 @@ def device_info(file1, file2, file4):
         else:
             df_deviceinfo.at[index, '区域'] = 'Unknown'  # 可以设置一个默认值，以便调试
 
-        if series['测点编号'][-2:-1] in ['X', 'Y', 'Z', 'S']:
+        if series['测点编号'][-2:] in ['XA', 'YA', 'ZA', 'ZT']:
             mac2 = str(series['通道编号'])[:-2]
             df_deviceinfo.at[index, 'MAC地址'] = mac2  # 填写无线传感器的’MAC地址‘，实则为网关的sn号
         else:
@@ -237,3 +237,4 @@ if __name__ == "__main__":
     device_info(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx",
                 "后台文件/my_def_对应注释.xlsx", "device.xlsx")
     # tupuSetting_V3(r"H:\chaos项目资料\特征解析工具汇编\测试文件\data_all - 平台导入表(电流电压).xlsx", "tupusetting.xlsx")
+
