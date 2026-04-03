@@ -64,13 +64,13 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
             cloned = base_acc_rows.copy()
             cloned["通道类型"] = target_channel_type
 
-            # 只保留当前模板中还不存在的键
             cloned["__temp_key__"] = list(zip(
                 cloned["通道类型"],
                 cloned["数据项（特征）类型"],
                 cloned["数据类型"]
             ))
 
+            # 只保留当前模板中还不存在的键
             cloned = cloned[~cloned["__temp_key__"].isin(existing_keys)].copy()
             cloned = cloned.drop(columns="__temp_key__", errors="ignore")
 
@@ -137,6 +137,8 @@ def resolve_channel_type(sensor_type, point_code):
         if axis_flag in ['X', 'Y']:
             return 'XY无线加速度'
         elif axis_flag in ['Z']:
+            if point_code_str[-1] == "T":
+                return 'S无线加速度'
             return 'Z无线加速度'
         else:
             return '加速度'
@@ -184,13 +186,11 @@ def output_template(parm_data, bearing_data):
             enable('vel_pass_rms', 'vel_low_rms', 'acc_rms', 'acc_p','vibration_impulse', 'acc_kurtosis',
                    'acc_skew', 'vel_p', 'DCValues')
         elif channel_type == "XY无线加速度":
-            print(channel_type, ":", point_code_str)
             enable('rmsValues', 'diagnosisPk', 'integratRMS', 'kurtosis')
-            print(enabled_features)
         elif channel_type == "Z无线加速度":
-            print(channel_type, ":", point_code_str)
-            enable('rmsValues', 'diagnosisPk', 'integratRMS', 'envelopEnergy', 'kurtosis', 'TemperatureBot')
-            print(enabled_features)
+            enable('rmsValues', 'diagnosisPk', 'integratRMS', 'envelopEnergy', 'kurtosis')
+        elif channel_type == "S无线加速度":
+            enable('TemperatureBot')
 
         # 倍频特征
         if ismy_null(N):
