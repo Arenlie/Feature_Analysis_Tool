@@ -18,8 +18,10 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
     模板标准化：
     1. 检查必要列
     2. 清洗空白
-    3. 构造唯一码：(通道类型, 数据项（特征）类型, 数据类型)
-    4. 校验唯一码不能重复
+    3. 将“加速度”中 数据类型 != “时域特征” 的行，自动复制给
+       “XY无线加速度” 和 “Z无线加速度”
+    4. 构造唯一码：(通道类型, 数据项（特征）类型, 数据类型)
+    5. 校验唯一码不能重复
     """
     missing_cols = [c for c in TEMPLATE_REQUIRED_COLUMNS if c not in template_dataframe.columns]
     if missing_cols:
@@ -30,15 +32,64 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
     for col in TEMPLATE_REQUIRED_COLUMNS:
         df[col] = df[col].astype(str).str.strip()
 
-    # 去掉空白行
+    # 去掉空白/伪空值
     df = df.replace("nan", "").replace("None", "")
     df = df[
         (df['数据项（特征）类型'] != "") &
         (df['数据类型'] != "") &
         (df['通道类型'] != "")
-        ].copy()
+    ].copy()
 
+    # =========================================================
+    # 扩充模板：
+    # 将 通道类型=加速度 且 数据类型!=时域特征 的行，
+    # 复制给 XY无线加速度 和 Z无线加速度
+    # =========================================================
+    base_acc_rows = df[
+        (df["通道类型"] == "加速度") &
+        (df["数据类型"] != "时域特征")
+    ].copy()
+
+    if not base_acc_rows.empty:
+        # 先构造当前已存在的键，避免复制后撞重
+        existing_keys = set(zip(
+            df["通道类型"],
+            df["数据项（特征）类型"],
+            df["数据类型"]
+        ))
+
+        extra_rows = []
+
+        for target_channel_type in ["XY无线加速度", "Z无线加速度"]:
+            cloned = base_acc_rows.copy()
+            cloned["通道类型"] = target_channel_type
+
+            # 只保留当前模板中还不存在的键
+            cloned["__temp_key__"] = list(zip(
+                cloned["通道类型"],
+                cloned["数据项（特征）类型"],
+                cloned["数据类型"]
+            ))
+
+            cloned = cloned[~cloned["__temp_key__"].isin(existing_keys)].copy()
+            cloned = cloned.drop(columns="__temp_key__", errors="ignore")
+
+            # 更新 existing_keys，防止两轮复制内部也重复
+            existing_keys.update(zip(
+                cloned["通道类型"],
+                cloned["数据项（特征）类型"],
+                cloned["数据类型"]
+            ))
+
+            if not cloned.empty:
+                extra_rows.append(cloned)
+
+        if extra_rows:
+            df = pd.concat([df] + extra_rows, ignore_index=True)
+
+    # =========================================================
     # 构造内部唯一码
+    # =========================================================
     df["__template_key__"] = list(zip(
         df["通道类型"],
         df["数据项（特征）类型"],
@@ -52,6 +103,7 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
             "模板表中存在重复的唯一码 (通道类型, 数据项（特征）类型, 数据类型)，请清理重复项：\n"
             f"{dup_keys}"
         )
+
     return df
 
 
@@ -129,17 +181,17 @@ def output_template(parm_data, bearing_data):
         point_code_str = str(point_code)
         channel_type = resolve_channel_type(sensor_type, point_code_str)
         if channel_type == "加速度":
-            enable(
-                'vel_pass_rms', 'vel_low_rms', 'acc_rms', 'acc_p',
-                'vibration_impulse', 'acc_kurtosis', 'acc_skew', 'vel_p', 'DCValues'
-            )
+            enable('vel_pass_rms', 'vel_low_rms', 'acc_rms', 'acc_p','vibration_impulse', 'acc_kurtosis',
+                   'acc_skew', 'vel_p', 'DCValues')
         elif channel_type == "XY无线加速度":
             print(channel_type, ":", point_code_str)
             enable('rmsValues', 'diagnosisPk', 'integratRMS', 'kurtosis')
+            print(enabled_features)
         elif channel_type == "Z无线加速度":
             print(channel_type, ":", point_code_str)
             enable('rmsValues', 'diagnosisPk', 'integratRMS', 'envelopEnergy', 'kurtosis', 'TemperatureBot')
-        print("enabled_features:", enabled_features)
+            print(enabled_features)
+
         # 倍频特征
         if ismy_null(N):
             enable(
@@ -272,7 +324,6 @@ def select_template_rows(template_dataframe: pd.DataFrame, channel_type: str,
     selected_rows = candidate_rows[
         candidate_rows["数据项（特征）类型"].isin(enabled_feature_types)
     ].copy()
-    print(selected_rows)
 
     return selected_rows
 
@@ -332,12 +383,15 @@ def output_template_all(excel_path, my_deftable, output_path, need_channel_id=Tr
         if eq_name is None or eq_name == "" or pd.isna(eq_name) or pd.isnull(eq_name):
             continue
 
+        channel_type = resolve_channel_type(sensor_type, point_code)
         enabled_feature_types = output_template(df_row, bearing_data)
+        if df_row[3][-2:-1] in ['X', 'Y']:
+            print(df_row[3], ":", enabled_feature_types)
 
         # 关键：先按通道类型过滤，再按特征类型过滤
         selected_template_rows = select_template_rows(
             template_dataframe=template_dataframe,
-            channel_type=sensor_type,
+            channel_type=channel_type,
             enabled_feature_types=enabled_feature_types
         )
 
@@ -430,6 +484,6 @@ if __name__ == "__main__":
     output_template_all(
         r"后台文件/data_all(模板).xlsx",
         r"后台文件/my_def_对应注释.xlsx",
-        r"C:\Users\Administrator\Desktop\平台导入表.xlsx",
+        r"后台文件/平台导入表.xlsx",
         False
     )
