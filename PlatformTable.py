@@ -38,7 +38,7 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
         (df['数据项（特征）类型'] != "") &
         (df['数据类型'] != "") &
         (df['通道类型'] != "")
-    ].copy()
+        ].copy()
 
     # =========================================================
     # 扩充模板：
@@ -48,7 +48,7 @@ def normalize_template_dataframe(template_dataframe: pd.DataFrame) -> pd.DataFra
     base_acc_rows = df[
         (df["通道类型"] == "加速度") &
         (df["数据类型"] != "时域特征")
-    ].copy()
+        ].copy()
 
     if not base_acc_rows.empty:
         # 先构造当前已存在的键，避免复制后撞重
@@ -183,7 +183,7 @@ def output_template(parm_data, bearing_data):
         point_code_str = str(point_code)
         channel_type = resolve_channel_type(sensor_type, point_code_str)
         if channel_type == "加速度":
-            enable('vel_pass_rms', 'vel_low_rms', 'acc_rms', 'acc_p','vibration_impulse', 'acc_kurtosis',
+            enable('vel_pass_rms', 'vel_low_rms', 'acc_rms', 'acc_p', 'vibration_impulse', 'acc_kurtosis',
                    'acc_skew', 'vel_p', 'DCValues')
         elif channel_type == "XY无线加速度":
             enable('rmsValues', 'diagnosisPk', 'integratRMS', 'kurtosis')
@@ -385,8 +385,6 @@ def output_template_all(excel_path, my_deftable, output_path, need_channel_id=Tr
 
         channel_type = resolve_channel_type(sensor_type, point_code)
         enabled_feature_types = output_template(df_row, bearing_data)
-        if df_row[3][-2:-1] in ['X', 'Y']:
-            print(df_row[3], ":", enabled_feature_types)
 
         # 关键：先按通道类型过滤，再按特征类型过滤
         selected_template_rows = select_template_rows(
@@ -425,8 +423,8 @@ def output_template_all(excel_path, my_deftable, output_path, need_channel_id=Tr
                          ) * 0.8
 
         max_widths = (excel_dataframe.astype(str)
-                      .applymap(lambda x: len(x.encode('utf-8')))
-                      .agg(max).values
+                      .map(lambda x: len(x.encode('utf-8')))
+                      .agg("max").values
                       ) * 0.8
 
         return np.max([column_widths, max_widths], axis=0)
