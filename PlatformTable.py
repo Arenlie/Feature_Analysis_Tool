@@ -402,8 +402,9 @@ def output_template_all(excel_path, my_deftable, output_path, need_channel_id=Tr
                 sensor_type,
                 meta_row['数据项（特征）名称'],
                 format_feature_code(point_code, meta_row['数据项代号']),
-                meta_row['数据项（特征）类型'],
                 meta_row['数据类型'],
+                # meta_row['数据类型'],
+                "模拟量",
                 meta_row['单位'],
                 channel_id
             ])
